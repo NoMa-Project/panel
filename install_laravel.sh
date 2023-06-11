@@ -15,11 +15,10 @@ read -p "Entrez le nom de la base de données: " db_name
 read -p "Entrez le nom d'utilisateur de la base de données: " db_user
 read -s -p "Entrez le mot de passe de la base de données: " db_password
 
-#create database
 mysql -u root -p <<MYSQL_SCRIPT
-CREATE DATABASE $db_name;
 CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';
-GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'localhost';
+CREATE DATABASE $db_name;
+GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'localhost' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 MYSQL_SCRIPT
 
@@ -34,17 +33,32 @@ php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a6110855
 php composer-setup.php
 php -r "unlink('composer-setup.php');"
 mv composer.phar /usr/local/bin/composer
-mkdir /var/www/$sitename
 
 #get laravel from github
-git clone https://github.com/NoMa-Project/panel-src.git ./NoMa-Panel
-cd ./NoMa-Panel
-cp -r ./NoMa-Panel/* /var/www/$sitename
-rm -rf ./NoMa-Panel
+git clone https://github.com/NoMa-Project/panel-src.git /var/www/$sitename
+#cp -a ./panel-src/* /var/www/$sitename
 
 cd /var/www/$sitename
 composer install
-apt install npm -y && npm install -y
+
+# Installation de NVM
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Chargement de NVM dans la session courante
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Cela charge NVM
+
+# Installation de la dernière version de Node.js et npm
+nvm install node
+
+# Définition de la version installée comme version par défaut
+nvm alias default node
+
+# Affichage des versions installées de Node.js et npm
+node --version
+npm --version
+
+npm install -y
 
 #config apache
 echo "<VirtualHost *:443>
@@ -73,6 +87,7 @@ echo "<VirtualHost *:443>
 #handle the rights
 chmod -R 755 /var/www/$sitename
 chown -R www-data:www-data /var/www/$sitename
+
 a2enmod rewrite
 a2dissite 000-default.conf
 a2ensite $sitename.conf
@@ -88,10 +103,10 @@ myip=$(ip a s dev ens33 | awk '/inet /{print $2}' | cut -d/ -f1)
 echo "$myip $fqnd" >> /etc/hosts
 
 #config .env file
-sed -i "s/^DB_DATABASE=.*/DB_DATABASE=test1/" /var/www/$sitename/.env
-sed -i "s/^DB_USERNAME=.*/DB_USERNAME=test1/" /var/www/$sitename/.env
-sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=password/" /var/www/$sitename/.env
+sed -i "s/^DB_HOST=.*/DB_HOST=localhost/" /var/www/$sitename/.env
+sed -i "s/^DB_DATABASE=.*/DB_DATABASE=$db_name/" /var/www/$sitename/.env
+sed -i "s/^DB_USERNAME=.*/DB_USERNAME=$db_user/" /var/www/$sitename/.env
+sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$db_password/" /var/www/$sitename/.env
 
 php artisan migrate
-clear
 echo "Installation completed. Enter https://$fqnd in your naviguator to access your website."
