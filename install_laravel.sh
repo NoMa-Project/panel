@@ -34,6 +34,7 @@ php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a6110855
 php composer-setup.php
 php -r "unlink('composer-setup.php');"
 mv composer.phar /usr/local/bin/composer
+mkdir /var/www/$sitename
 
 #get laravel from github
 git clone https://github.com/NoMa-Project/panel-src.git ./NoMa-Panel
