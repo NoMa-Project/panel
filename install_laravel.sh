@@ -38,9 +38,8 @@ mv composer.phar /usr/local/bin/composer
 #get laravel from github
 git clone https://github.com/NoMa-Project/panel-src.git ./NoMa-Panel
 cd ./NoMa-Panel
-cd ..
-cp -r NoMa-Panel /var/www/$sitename
-rm -rf NoMa-Panel
+cp -r ./NoMa-Panel/* /var/www/$sitename
+rm -rf ./NoMa-Panel
 
 cd /var/www/$sitename
 composer install
